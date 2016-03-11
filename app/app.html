@@ -1,0 +1,256 @@
+<div class="col-md-6">
+    <div class="panel panel-success">
+        <div class="panel-heading">
+            Character Stats
+            <span class="pull-right">
+                <span class="help" tooltip="Skill Credits">
+                    <span class="label label-success">
+                        <i class="fa fa-star"></i>
+                        {{character.getRemainingSkillPoints()}} / {{character.getMaximumSkillPoints()}}
+                    </span>
+                </span>
+                &nbsp;
+                <span class="help" tooltip="Augmentations">
+                    <span class="label label-info">
+                        <i class="fa fa-magic"></i>
+                        {{character.getInvestedAugmentations()}}
+                    </span>
+                </span>
+            </span>
+        </div>
+        <div class="panel-body">
+            <form name="formCharacter" role="form">
+                <div class="form-group ng-class: {'has-error':formCharacter.inputLevel.$error.min || formCharacter.inputLevel.$error.max || formCharacter.inputLevel.$error.required}">
+                    <label class="control-label">Level</label>
+                    <input name="inputLevel" class="form-control" type="number" ng-model="character.level" min="1" max="275" placeholder="275" required/>
+                    <div class="error" ng-show="formCharacter.inputLevel.$error.min || formCharacter.inputLevel.$error.max || formCharacter.inputLevel.$error.required">Enter a number between 1 and 275!</div>
+                </div>
+                <div class="checkbox" ng-repeat="unlockable in character.unlocks">
+                    <label>
+                        <input type="checkbox" ng-model="unlockable.unlocked"/>
+                        {{unlockable.name}} <span class="label pull-right" ng-class="{'label-success':unlockable.unlocked,'label-default':!unlockable.unlocked}"><span class="badge">+1</span> Skill Point</span>
+                    </label>
+                </div>
+            </form>
+            <div class="form-group">
+            	<div class="row">
+                    <div class="col-sm-4">
+                        <div class="btn btn-default btn-block" ng-click="character.maximize()"><i class="fa fa-arrow-up"></i> Max Stats</div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="btn btn-default btn-block" ng-click="character.resetSkills()"><i class="fa fa-refresh"></i> Reset Skills</div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="btn btn-danger btn-block" ng-click="character.resetAll()"><i class="fa fa-refresh"></i> Reset All</div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+            	<div class="row">
+                    <div class="col-sm-3">
+                        <div class="btn btn-default btn-block" ng-click="history()"><i class="fa fa-search"></i> View Saved</div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="btn btn-success btn-block" ng-click="save()"><i class="fa fa-save"></i> Save Build</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{app.url + '/load/' + character.serialize()}}"/>
+                            <div class="input-group-btn">
+                                <div class="btn btn-success btn-block" clip-copy="copyExportLink()">&nbsp;<i class="fa fa-copy"></i> Copy Link&nbsp;</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default">
+        <div class="panel-heading">
+        	<div class="row">
+                <div class="col-xs-5">Untrained Skills</div>
+                <div class="col-xs-7">
+                	<div class="input-group">
+                        <div class="input-group-addon">
+                        	<i class="fa fa-fw fa-lg fa-search" tooltip-append-to-body="true"></i>
+                        </div>
+                    	<input type="text" class="form-control" ng-model="searchUntrained" placeholder="Search" />
+                        <div class="input-group-addon">
+                            <span class="help pull-right" tooltip="Remaining Skill Credits">
+                                <i class="fa fa-asterisk fa-lg text-primary"></i>
+                                {{character.getRemainingSkillPoints()}}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+           </div>
+        </div>
+        <div class="panel-body">
+            <div ng-repeat="skill in character.skills | filter:searchUntrained" ng-if="skill.isUntrained()" class="col-sm-12 skill-row">
+            	<div class="row" tooltip-html-unsafe="
+                    	<div class='tooltip-header'>{{ skill.name }}</div>
+                        <div class='divider'></div>
+                        <div class='tooltip-body'>
+                            {{skill.description}}
+                            <div class='divider'></div>
+                            <div class='text-left'>
+                            	Formula: 			<span class='pull-right'>{{skill.formula}}</span><br/>
+                            	Pre Train Status: 	<span class='pull-right'>{{skill.preTrainStatus}}</span><br/>
+                                <div class='divider'></div>
+                            	Train Cost: 	 	<span class='pull-right'>{{skill.trainCost}}</span><br/>
+                            	Specialize Cost: 	<span class='pull-right'>{{skill.specializeCost}}</span><br/>
+                                <div class='divider'></div>
+                            	Max Base (S): 		<span class='pull-right'>{{skill.maxBaseSpecialized}}</span><br/>
+                            	Max Base (T): 		<span class='pull-right'>{{skill.maxBaseTrained}}</span><br/>
+                            	Max Base (U): 		<span class='pull-right'>{{skill.maxBaseUntrained}}</span><br/>
+                            </div>
+                        </div>
+                    " tooltip-placement="left" tooltip-append-to-body="true">
+                    <div class="col-xs-1"><img class="skill-list-icon" src="img/{{ skill.icon }}"></div>
+                    <div class="col-xs-5">{{skill.name}}</div>
+                    <div class="col-xs-4">
+                        <span class="help" tooltip-html-unsafe="Cost To Train/Specialize" tooltip-placement="top" tooltip-append-to-body="true">
+                            <i class="fa fa-lg fa-star text-primary"></i>
+                            ({{skill.trainCost}}/{{skill.specializeCost}})
+                        </span>
+                    </div>                
+                    <div class="col-xs-1 col-xs-offset-1">
+                        <i ng-if="character.canPurchaseUpgrade(skill)" ng-click="skill.train()" class="fa fa-lg fa-arrow-circle-up" tooltip-html-unsafe="Train: <span class='label label-danger'><span class='badge'>-{{skill.trainCost}}</span> Skill Credits</span>" tooltip-placement="right" tooltip-append-to-body="true"></i>
+                    </div>
+                </div> 
+            </div> 
+        </div> 
+    </div> 
+</div>
+
+<div class="col-md-6">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+        	<div class="row">
+                <div class="col-xs-5">Specialized Skills</div>
+                <div class="col-xs-7">
+                	<div class="input-group">
+                        <div class="input-group-addon">
+                        	<i class="fa fa-fw fa-lg fa-search" tooltip-append-to-body="true"></i>
+                        </div>
+                    	<input type="text" class="form-control" ng-model="searchSpecialized" placeholder="Search" />
+                        <div class="input-group-addon">
+                            <span class="help" tooltip="Invested Skill Credits">
+                                <i class="fa fa-fw fa-lg fa-check-circle text-success"></i>
+                                {{character.getInvestedSkillPoints(2)}}
+                            </span>
+                            <span class="help" tooltip="Invested Augmentations">
+                                <i class="fa fa-fw fa-lg fa-magic text-info"></i>
+                                {{character.getInvestedAugmentations()}}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+           </div>
+        </div>
+        <div class="panel-body">
+            <div ng-repeat="skill in character.skills | filter:searchSpecialized" ng-if="skill.isSpecialized()" class="col-sm-12 skill-row">
+            	<div class="row" tooltip-html-unsafe="
+                    	<div class='tooltip-header'>{{ skill.name }}</div>
+                        <div class='divider'></div>
+                        <div class='tooltip-body'>
+                            {{skill.description}}
+                            <div class='divider'></div>
+                            <div class='text-left'>
+                                Formula:            <span class='pull-right'>{{skill.formula}}</span><br/>
+                                Pre Train Status:   <span class='pull-right'>{{skill.preTrainStatus}}</span><br/>
+                                <div class='divider'></div>
+                                Train Cost:         <span class='pull-right'>{{skill.trainCost}}</span><br/>
+                                Specialize Cost:    <span class='pull-right'>{{skill.specializeCost}}</span><br/>
+                                <div class='divider'></div>
+                                Max Base (S):       <span class='pull-right'>{{skill.maxBaseSpecialized}}</span><br/>
+                                Max Base (T):       <span class='pull-right'>{{skill.maxBaseTrained}}</span><br/>
+                                Max Base (U):       <span class='pull-right'>{{skill.maxBaseUntrained}}</span><br/>
+                            </div>
+                        </div>
+                    " tooltip-placement="left" tooltip-append-to-body="true">
+                    <div class="col-xs-1"><img class="skill-list-icon" src="img/{{ skill.icon }}"></div>
+                    <div class="col-xs-5">{{skill.name}}</div>
+                    <div class="col-xs-4">
+                        <span class="help" tooltip-html-unsafe="Cost To Train/Specialize" tooltip-placement="top" tooltip-append-to-body="true">
+                            <i class="fa fa-lg fa-star text-primary"></i>
+                            ({{skill.trainCost}}/{{skill.specializeCost}})
+                        </span>
+                        <span class="help pull-right" tooltip-html-unsafe="Invested: <span class='label label-success'><span class='badge'>{{skill.getInvestedPoints()}}</span> Skill Credits</span>" ng-if="skill.getInvestedPoints() > 0" tooltip-placement="top" tooltip-append-to-body="true">
+                            {{skill.getInvestedPoints()}}
+                            <i class="fa fa-lg fa-check text-success"></i>
+                        </span>
+                    </div>
+                    <div class="col-xs-1">
+                        <i ng-if="skill.canUnspecialize()" ng-click="skill.unspecialize()" class="fa fa-lg fa-arrow-circle-down" tooltip-html-unsafe="Unspecialize: <span class='label label-success'><span class='badge'>+{{skill.specializeCost}}</span> {{ skill.getSpecializeCurrency() }}</span>" tooltip-placement="right" tooltip-append-to-body="true"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel panel-default">
+        <div class="panel-heading">
+        	<div class="row">
+                <div class="col-xs-5">Trained Skills</div>
+                <div class="col-xs-7">
+                	<div class="input-group">
+                        <div class="input-group-addon">
+                        	<i class="fa fa-fw fa-lg fa-search" tooltip-append-to-body="true"></i>
+                        </div>
+                    	<input type="text" class="form-control" ng-model="searchTrained" placeholder="Search" />
+                        <div class="input-group-addon">
+                            <span class="help pull-right" tooltip="Invested Skill Credits">
+                                <i class="fa fa-fw fa-lg fa-check-circle text-success"></i>
+                                {{character.getInvestedSkillPoints(1)}}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+           </div>
+        </div>
+        <div class="panel-body">
+            <div ng-repeat="skill in character.skills | filter:searchTrained" ng-if="skill.isTrained()" class="col-sm-12 skill-row">
+            	<div class="row" tooltip-html-unsafe="
+                    	<div class='tooltip-header'>{{ skill.name }}</div>
+                        <div class='divider'></div>
+                        <div class='tooltip-body'>
+                            {{skill.description}}
+                            <div class='divider'></div>
+                            <div class='text-left'>
+                                Formula:            <span class='pull-right'>{{skill.formula}}</span><br/>
+                                Pre Train Status:   <span class='pull-right'>{{skill.preTrainStatus}}</span><br/>
+                                <div class='divider'></div>
+                                Train Cost:         <span class='pull-right'>{{skill.trainCost}}</span><br/>
+                                Specialize Cost:    <span class='pull-right'>{{skill.specializeCost}}</span><br/>
+                                <div class='divider'></div>
+                                Max Base (S):       <span class='pull-right'>{{skill.maxBaseSpecialized}}</span><br/>
+                                Max Base (T):       <span class='pull-right'>{{skill.maxBaseTrained}}</span><br/>
+                                Max Base (U):       <span class='pull-right'>{{skill.maxBaseUntrained}}</span><br/>
+                            </div>
+                        </div>
+                    " tooltip-placement="left" tooltip-append-to-body="true">
+                    <div class="col-xs-1"><img class="skill-list-icon" src="img/{{ skill.icon }}"></div>
+                    <div class="col-xs-5">{{skill.name}}</div>
+                    <div class="col-xs-4">
+                        <span class="help" tooltip-html-unsafe="Cost To Train/Specialize" tooltip-placement="top" tooltip-append-to-body="true">
+                            <i class="fa fa-lg fa-star text-primary"></i>
+                            ({{skill.trainCost}}/{{skill.specializeCost}})
+                        </span>
+                        <span class="help pull-right" tooltip-html-unsafe="Invested: <span class='label label-success'><span class='badge'>{{skill.getInvestedPoints()}}</span> Skill Credits</span>" ng-if="skill.getInvestedPoints() > 0" tooltip-placement="top" tooltip-append-to-body="true">
+                            {{skill.getInvestedPoints()}}
+                            <i class="fa fa-lg fa-check text-success"></i>
+                        </span>
+                    </div>
+                    <div class="col-xs-1">
+                        <i ng-if="skill.canUntrain()" ng-click="skill.untrain()" class="fa fa-lg fa-arrow-circle-down" tooltip-html-unsafe="Untrain: <span class='label label-success'><span class='badge'>+{{skill.trainCost}}</span> Skill Credits</span>" tooltip-placement="left" tooltip-append-to-body="true"></i>
+                    </div>
+                    <div class="col-xs-1">
+                        <i ng-if="character.canPurchaseUpgrade(skill)" ng-click="skill.specialize()" class="fa fa-lg fa-arrow-circle-up" tooltip-html-unsafe="Specialize: <span class='label label-danger'><span class='badge'>-{{skill.specializeCost}}</span> {{ skill.getSpecializeCurrency() }}</span>" tooltip-placement="right" tooltip-append-to-body="true"></i>
+                    </div>
+                </div>
+            </div> 
+        </div> 
+    </div> 
+</div>
